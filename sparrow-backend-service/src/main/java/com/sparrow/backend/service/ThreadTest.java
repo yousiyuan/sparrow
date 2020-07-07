@@ -22,6 +22,7 @@ public class ThreadTest implements Runnable {
 
             baseNum += 1;
             String result = ComUtils.formatDateObj(new Date()) + " ---> " + Thread.currentThread().getName() + " : " + baseNum;
+            Thread.sleep(200);
             System.out.println(result);
 
         } catch (Exception ex) {

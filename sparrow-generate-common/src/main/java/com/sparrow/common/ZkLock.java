@@ -8,6 +8,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Zookeeper临时节点的生命周期就是Zookeeper Session会话的生命周期，会话结束自动删除
@@ -27,8 +28,14 @@ public class ZkLock {
     //TODO: zk客户端工具
     private ZkClient zkClient;
 
+    //TODO: 事件监听对象
+    private IZkDataListener zkDataListener = new ZkLockListener();
+
     //TODO: 信号量
     private CountDownLatch countDownLatch;
+
+    //TODO: 计数器
+    private AtomicInteger counter = new AtomicInteger(0);
 
     static {
         Environment environment = SpringContextUtils.getBean(Environment.class);
@@ -43,6 +50,7 @@ public class ZkLock {
     //TODO: 获取锁
     public void gainLock() {
         if (this.tryGainLock()) {
+            System.out.println("\r\n获取锁 - 尝试次数：" + counter.get());
             return;
         }
         this.waitForLock();
@@ -52,6 +60,7 @@ public class ZkLock {
     //TODO: 尝试获取锁，成功-true; 失败-false
     private boolean tryGainLock() {
         try {
+            counter.incrementAndGet();
             zkClient.createEphemeral(ZK_LOCK_PATH);
             return true;
         } catch (Exception ignored) {
@@ -61,24 +70,8 @@ public class ZkLock {
 
     //TODO: 等待锁释放
     private void waitForLock() {
-        //TODO: 事件监听
-        IZkDataListener izkDataListener = new IZkDataListener() {
-            @Override
-            public void handleDataChange(String dataPath, Object data) {
-                // 节点Change事件
-            }
-
-            @Override
-            public void handleDataDeleted(String dataPath) {
-                //FIXME: 节点Delete事件
-                if (countDownLatch != null) {
-                    countDownLatch.countDown(); //③ 解除阻塞
-                }
-            }
-        };
-
         //TODO: 注册节点信息 - 事件监听
-        zkClient.subscribeDataChanges(ZK_LOCK_PATH, izkDataListener);
+        zkClient.subscribeDataChanges(ZK_LOCK_PATH, zkDataListener);
 
         //TODO: 等待锁释放
         if (zkClient.exists(ZK_LOCK_PATH)) {
@@ -91,13 +84,14 @@ public class ZkLock {
         }
 
         //TODO: 删除节点信息 - 事件监听
-        zkClient.unsubscribeDataChanges(ZK_LOCK_PATH, izkDataListener);
+        zkClient.unsubscribeDataChanges(ZK_LOCK_PATH, zkDataListener);
     }
 
     //TODO: 释放锁
     public void releaseLock() {
+        System.out.println("释放锁\r\n");
         if (zkClient != null) {
-            zkClient.close(); //② 结束Zookeeper Session会话
+            zkClient.close(); //③ 结束Zookeeper Session会话
         }
     }
 
@@ -105,6 +99,21 @@ public class ZkLock {
     protected void finalize() {
         if (zkClient != null) {
             zkClient.close();
+        }
+    }
+
+    class ZkLockListener implements IZkDataListener {
+        @Override
+        public void handleDataChange(String dataPath, Object data) {
+            // 节点Change事件
+        }
+
+        @Override
+        public void handleDataDeleted(String dataPath) {
+            //FIXME: 节点Delete事件
+            if (countDownLatch != null) {
+                countDownLatch.countDown(); //② 解除阻塞
+            }
         }
     }
 }
