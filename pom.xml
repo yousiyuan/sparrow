@@ -15,6 +15,7 @@
         <module>sparrow-backend-service</module>
         <module>sparrow-generate-common</module>
         <module>sparrow-framework</module>
+        <module>sparrow-zookeeper-server</module>
     </modules>
 
     <properties>
@@ -202,31 +203,25 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.0.1</version>
+                    <version>3.1.1</version>
                     <executions>
                         <execution>
                             <id>copy</id>
                             <phase>package</phase>
                             <goals>
-                                <goal>copy</goal>
+                                <goal>copy-dependencies</goal>
                             </goals>
-                            <configuration>
-                                <artifactItems>
-                                    <!--
-                                    <artifactItem>
-                                        <groupId>junit</groupId>
-                                        <artifactId>junit</artifactId>
-                                        <version>4.12</version>
-                                    </artifactItem>
-                                    -->
-                                </artifactItems>
-                                <!-- outputDirectory：用来指定拷出后Libraries的存放地 -->
-                                <outputDirectory>${project.build.directory}/lib/</outputDirectory>
-                            </configuration>
                         </execution>
                     </executions>
                     <configuration>
-                        <includeScope>compile</includeScope>
+                        <outputDirectory>${project.build.directory}/classes/libs/</outputDirectory>
+                        <includeScope>runtime</includeScope>
+                        <useSubDirectoryPerArtifact>false</useSubDirectoryPerArtifact>
+                        <stripVersion>false</stripVersion>
+                        <overWriteReleases>false</overWriteReleases>
+                        <overWriteSnapshots>false</overWriteSnapshots>
+                        <overWriteIfNewer>true</overWriteIfNewer>
+                        <copyPom>false</copyPom>
                     </configuration>
                 </plugin>
                 <!-- springboot工程打包插件 -->
