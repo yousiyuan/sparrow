@@ -1,7 +1,7 @@
 package com.sparrow.backend.api.configuration;
 
 import lombok.extern.slf4j.Slf4j;
-//import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkClient;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.*;
@@ -56,6 +56,11 @@ public class ZooConfig implements Watcher {
 
         //TODO: 新启线程异步创建ZooKeeper的连接对象(具体请看Zookeeper构造器)
         return new ZooKeeper(addresses, sessionTimeout, this);
+    }
+
+    @Bean("zkClient")
+    public ZkClient zkClient() {
+        return new ZkClient(addresses, sessionTimeout);
     }
 
     /**
